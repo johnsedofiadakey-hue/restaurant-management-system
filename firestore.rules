@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: get the calling user's role from the users collection
+    function userRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isStaff() {
+      return isSignedIn() && userRole() in ['admin', 'supervisor', 'kitchen', 'waiter'];
+    }
+    function isAdmin() {
+      return isSignedIn() && userRole() == 'admin';
+    }
+    function isSupervisorOrAbove() {
+      return isSignedIn() && userRole() in ['admin', 'supervisor'];
+    }
+    // ORDERS
+    // Customers (unauthenticated) can create orders and read their own by ID.
+    // Staff can read and update all orders.
+    match /orders/{orderId} {
+      allow create: if true; // customer places order
+      allow read: if true;   // customer tracks by ID, staff monitors
+      allow update: if isStaff(); // only staff can change status/eta
+      allow delete: if isSupervisorOrAbove();
+    }
+
+    // MENU
+    // Public read so the customer-facing menu works without auth.
+    // Only supervisors/admins can write.
+    match /menu/{itemId} {
+      allow read: if true;
+      allow write: if isSupervisorOrAbove();
+    }
+
+    // TABLES
+    // Public read so customers can see table list in checkout dropdown.
+    // Only admins can add/delete tables.
+    match /tables/{tableId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isStaff(); // waiters update table status
+    }
+
+    // ALERTS (call-waiter / request-bill)
+    // Customers create; staff read and resolve.
+    match /alerts/{alertId} {
+      allow create: if true;
+      allow read, update, delete: if isStaff();
+    }
+
+    // REVIEWS
+    // Customers create (unauthenticated); staff read.
+    match /reviews/{reviewId} {
+      allow create: if true;
+      allow read: if isSupervisorOrAbove();
+      allow update, delete: if isAdmin();
+    }
+
+    // USERS (staff directory)
+    // Staff can read their own doc (for role lookup).
+    // Only admins can write (create/delete staff accounts).
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,81 @@
+/* ─── ORDER TRACKING STEPPER ─────────────────────────────────── */
+.trackCard {
+  background: var(--white);
+  border-radius: var(--r-xl);
+  padding: 1.625rem 1.5rem;
+  border: 1px solid rgba(0,0,0,0.07);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.trackStep {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ash-mid);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 0;
+  position: relative;
+  transition: color 0.4s ease;
+  letter-spacing: -0.01em;
+}
+
+/* Vertical connector line */
+.trackStep + .trackStep::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 9px;
+  width: 2px;
+  height: 0.875rem;
+  background: var(--ash-light);
+  transform: translateY(-100%);
+  transition: background 0.4s ease;
+}
+
+/* Step dot */
+.trackStep::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-full);
+  background: var(--white);
+  flex-shrink: 0;
+  order: -1;
+  transition: background 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+  border: 2px solid var(--ash-light);
+}
+
+/* Active step */
+.trackStep.trackActive {
+  color: var(--black);
+  font-weight: 800;
+}
+
+.trackStep.trackActive::after {
+  background: var(--red);
+  border-color: var(--red);
+  box-shadow: 0 0 0 5px rgba(211, 47, 47, 0.12);
+  animation: stepPulse 2s ease infinite;
+}
+
+/* Last active step gets a checkmark-like inner dot instead of pulse */
+.trackStep.trackActive:last-child::after {
+  animation: none;
+  box-shadow: 0 0 0 5px rgba(34,197,94,0.15);
+  background: #22C55E;
+  border-color: #22C55E;
+}
+
+@keyframes stepPulse {
+  0%, 100% { box-shadow: 0 0 0 5px rgba(211, 47, 47, 0.12); }
+  50%       { box-shadow: 0 0 0 9px rgba(211, 47, 47, 0.06); }
+}
+
+/* Active connector turns red */
+.trackStep.trackActive + .trackStep::before {
+  background: var(--red);
+}

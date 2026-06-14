@@ -1,0 +1,16 @@
+# env
+.env.local
+.env*.local
+
+# Next.js
+.next/
+out/
+
+# Node
+node_modules/
+
+# Firebase
+.firebase/
+
+# OS
+.DS_Store

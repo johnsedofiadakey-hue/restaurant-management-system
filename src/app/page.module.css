@@ -1,0 +1,211 @@
+/* ─── HOME / LANDING PAGE ────────────────────────────────────── */
+.main {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--black);
+}
+
+@media (max-width: 768px) {
+  .main {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── LEFT: BRAND PANEL ─────────────────────────────────────── */
+.brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3.5rem 3rem;
+  background: var(--black);
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+}
+
+/* Subtle red corner accent */
+.brand::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--red);
+}
+
+.brand::after {
+  content: '';
+  position: absolute;
+  bottom: -120px;
+  right: -120px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(211,47,47,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.brandLogo {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 3rem;
+}
+
+.brandDot {
+  width: 8px;
+  height: 8px;
+  background: var(--red);
+  border-radius: 9999px;
+  animation: pulse-ring 2.5s ease infinite;
+}
+
+.brandWordmark {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
+.headline {
+  font-size: clamp(3rem, 6vw, 4.5rem);
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: -0.04em;
+  line-height: 1.0;
+  margin-bottom: 1.5rem;
+}
+
+/* Red accent on first word */
+.headline::first-line {
+  color: var(--red);
+}
+
+.sub {
+  font-size: 1rem;
+  color: var(--ash);
+  line-height: 1.6;
+  max-width: 360px;
+  margin-bottom: 2rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #1A1A1A;
+  border: 1px solid #2A2A2A;
+  color: var(--ash);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.4rem 0.875rem;
+  border-radius: 9999px;
+  width: fit-content;
+}
+
+/* ─── RIGHT: ENTRY CARDS ─────────────────────────────────────── */
+.cards {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  padding: 3.5rem 3rem;
+  background: var(--white);
+  gap: 1rem;
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+  .brand  { padding: 3rem 1.75rem 2rem; }
+  .brand::before { width: 100%; height: 3px; }
+  .cards  { padding: 2rem 1.75rem 3rem; }
+}
+
+/* ─── CUSTOMER CARD ──────────────────────────────────────────── */
+.cardCustomer,
+.cardStaff {
+  display: flex;
+  align-items: center;
+  gap: 1.125rem;
+  padding: 1.25rem 1.375rem;
+  border-radius: var(--r-lg);
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border: 1.5px solid var(--border);
+}
+
+.cardCustomer {
+  background: var(--red);
+  border-color: var(--red);
+  color: var(--white);
+}
+
+.cardCustomer:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(211,47,47,0.35);
+}
+
+.cardStaff {
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
+}
+
+.cardStaff:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(17,17,17,0.3);
+}
+
+.cardIcon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.12);
+  border-radius: var(--r-md);
+}
+
+.cardTitle {
+  font-size: 1.0625rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.2rem;
+}
+
+.cardDesc {
+  font-size: 0.8125rem;
+  opacity: 0.72;
+  line-height: 1.4;
+}
+
+.cardArrow {
+  margin-left: auto;
+  font-size: 1.1rem;
+  opacity: 0.6;
+  flex-shrink: 0;
+  padding-left: 0.5rem;
+}
+
+/* ─── FEATURE BADGES ─────────────────────────────────────────── */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--ash-pale);
+  border: 1px solid var(--border);
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  letter-spacing: 0.01em;
+}

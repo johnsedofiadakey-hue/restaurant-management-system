@@ -1,0 +1,211 @@
+/* ─── WAITER DASHBOARD ───────────────────────────────────────── */
+
+.container {
+  min-height: 100vh;
+  background: var(--ash-pale);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: var(--black);
+  border-bottom: 3px solid var(--red);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: -0.02em;
+}
+
+.title::before {
+  content: '● ';
+  color: var(--red);
+  font-size: 0.6em;
+  vertical-align: middle;
+  margin-right: 0.25em;
+}
+
+/* ─── TABS ───────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 0;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 1.5rem;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2.5px solid transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 1rem 1.25rem;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.tab:hover:not(.active) { color: var(--text); }
+
+.tab.active {
+  color: var(--red);
+  border-bottom-color: var(--red);
+  font-weight: 700;
+}
+
+/* ─── ALERTS BANNER ──────────────────────────────────────────── */
+.alertsBanner {
+  background: var(--red);
+  color: var(--white);
+  padding: 0.875rem 1.5rem;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ─── TABLE GRID ─────────────────────────────────────────────── */
+.tableGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.tableCard {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow 0.15s ease;
+}
+
+.tableCard:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.875rem;
+}
+
+.statusBadge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--r-full);
+}
+
+.tableActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 1rem;
+}
+
+.actionBtn {
+  flex: 1;
+  padding: 0.5rem;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--ash-pale);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  transition: all 0.15s ease;
+}
+
+.actionBtn:hover { background: var(--ash-light); color: var(--text); }
+
+.actionBtn.primary {
+  background: var(--red);
+  color: var(--white);
+  border-color: var(--red);
+}
+
+.actionBtn.primary:hover { background: var(--red-deep); }
+
+/* ─── MANUAL ORDER FORM ──────────────────────────────────────── */
+.section {
+  padding: 1.5rem;
+  max-width: 640px;
+}
+
+.formGroup { margin-bottom: 1.25rem; }
+
+.formGroup label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.formGroup input,
+.formGroup select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--white);
+  color: var(--text);
+  font-size: 0.9375rem;
+  transition: border-color 0.15s ease;
+}
+
+.formGroup input:focus,
+.formGroup select:focus {
+  outline: none;
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(211,47,47,0.08);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--red);
+  color: var(--white);
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--r-md);
+  font-size: 0.875rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn:hover { background: var(--red-deep); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(211,47,47,0.4); }
+  70%  { box-shadow: 0 0 0 8px rgba(211,47,47,0); }
+  100% { box-shadow: 0 0 0 0 rgba(211,47,47,0); }
+}
