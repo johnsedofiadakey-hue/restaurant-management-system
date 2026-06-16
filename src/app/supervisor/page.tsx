@@ -237,7 +237,12 @@ export default function SupervisorDashboard() {
       toast(`Account created for ${staffEmail}!`, "success");
       setStaffEmail(""); setStaffPassword(""); setStaffName(""); setStaffRole("waiter");
     } catch (err: any) {
-      toast("Error creating account: " + err.message, "error");
+      const msg = err.code === "auth/email-already-in-use"
+        ? "An account with that email already exists."
+        : err.code === "auth/weak-password"
+        ? "Password must be at least 6 characters."
+        : err.message;
+      toast(msg, "error");
     } finally {
       setLoadingStaff(false);
     }

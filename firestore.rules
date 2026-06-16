@@ -10,13 +10,13 @@ service cloud.firestore {
       return request.auth != null;
     }
     function isStaff() {
-      return isSignedIn() && userRole() in ['admin', 'supervisor', 'kitchen', 'waiter'];
+      return isSignedIn() && userRole() in ['admin', 'supervisor', 'kitchen', 'waiter', 'ADMIN', 'SUPERVISOR', 'KITCHEN', 'WAITER'];
     }
     function isAdmin() {
-      return isSignedIn() && userRole() == 'admin';
+      return isSignedIn() && userRole() in ['admin', 'ADMIN'];
     }
     function isSupervisorOrAbove() {
-      return isSignedIn() && userRole() in ['admin', 'supervisor'];
+      return isSignedIn() && userRole() in ['admin', 'supervisor', 'ADMIN', 'SUPERVISOR'];
     }
     // ORDERS
     // Customers (unauthenticated) can create orders and read their own by ID.
