@@ -10,8 +10,8 @@ import { firebaseConfig } from "../../lib/firebase";
 import { collection, onSnapshot, updateDoc, doc, query, orderBy, addDoc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
-import { LuX, LuFlame, LuStar, LuCheck, LuPencil, LuUserPlus, LuTrash2, LuShieldCheck } from "react-icons/lu";
+import { getAuth, createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
+import { LuX, LuFlame, LuStar, LuCheck, LuPencil, LuUserPlus, LuTrash2, LuShieldCheck, LuKeyRound, LuRefreshCw } from "react-icons/lu";
 import { useToast } from "../../components/Toast";
 import DashboardNav from "../../components/DashboardNav";
 
@@ -66,6 +66,9 @@ export default function SupervisorDashboard() {
   const [staffRole, setStaffRole] = useState("waiter");
   const [staffName, setStaffName] = useState("");
   const [loadingStaff, setLoadingStaff] = useState(false);
+  const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
+  const [editingRole, setEditingRole] = useState("");
+  const [resetLoadingId, setResetLoadingId] = useState<string | null>(null);
 
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement>(null);
@@ -249,9 +252,29 @@ export default function SupervisorDashboard() {
   };
 
   const handleDeleteStaff = async (id: string, email: string) => {
-    if (!confirm(`Revoke access for ${email}? They will no longer be able to log in.`)) return;
+    if (!confirm(`Revoke access for ${email}? Their login will stop working immediately.`)) return;
     await deleteDoc(doc(db, "users", id));
     toast("Staff access revoked.", "info");
+  };
+
+  const handleUpdateRole = async (id: string) => {
+    if (!editingRole) return;
+    await updateDoc(doc(db, "users", id), { role: editingRole });
+    toast("Role updated.", "success");
+    setEditingStaffId(null);
+    setEditingRole("");
+  };
+
+  const handlePasswordReset = async (email: string, id: string) => {
+    setResetLoadingId(id);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast(`Password reset email sent to ${email}.`, "success");
+    } catch (err: any) {
+      toast("Could not send reset email: " + err.message, "error");
+    } finally {
+      setResetLoadingId(null);
+    }
   };
 
   return (
@@ -719,33 +742,75 @@ export default function SupervisorDashboard() {
             <h3 style={{ fontWeight: 800, fontSize: "1rem", marginBottom: "1rem" }}>
               Staff Directory <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.875rem" }}>({staffList.length})</span>
             </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem", maxWidth: 560 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", maxWidth: 600 }}>
               {staffList.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>No staff accounts yet.</p>}
-              {staffList.map(staff => (
-                <div key={staff.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem 1.25rem", background: "var(--white)", borderRadius: "var(--r-lg)", border: "1px solid var(--border)", gap: "0.75rem" }}>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontWeight: 700, fontSize: "0.9375rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {staff.name || staff.email}
-                    </p>
-                    <p style={{ color: "var(--text-muted)", fontSize: "0.8125rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {staff.name ? staff.email : ""}
-                    </p>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
-                    <span style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" as const, padding: "0.25rem 0.625rem", borderRadius: "var(--r-full)", background: staff.role === "admin" || staff.role === "supervisor" ? "var(--red-tint)" : "var(--ash-pale)", color: staff.role === "admin" || staff.role === "supervisor" ? "var(--red)" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                      {(staff.role === "admin" || staff.role === "supervisor") && <LuShieldCheck size={11} />}
-                      {staff.role}
-                    </span>
-                    {staff.role !== "admin" && (
-                      <button onClick={() => handleDeleteStaff(staff.id, staff.email)}
-                        style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", display: "flex", alignItems: "center", padding: "0.25rem" }}
-                        title="Revoke access">
-                        <LuTrash2 size={16} />
-                      </button>
+              {staffList.map(staff => {
+                const roleLower = (staff.role || "").toLowerCase();
+                const isSuperAdmin = roleLower === "admin" || roleLower === "supervisor";
+                const isEditing = editingStaffId === staff.id;
+                return (
+                  <div key={staff.id} style={{ background: "var(--white)", borderRadius: "var(--r-lg)", border: "1px solid var(--border)", overflow: "hidden" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem 1.25rem", gap: "0.75rem" }}>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <p style={{ fontWeight: 700, fontSize: "0.9375rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {staff.name || staff.email}
+                        </p>
+                        <p style={{ color: "var(--text-muted)", fontSize: "0.8125rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {staff.email}
+                        </p>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexShrink: 0 }}>
+                        <span style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" as const, padding: "0.25rem 0.625rem", borderRadius: "var(--r-full)", background: isSuperAdmin ? "var(--red-tint)" : "var(--ash-pale)", color: isSuperAdmin ? "var(--red)" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                          {isSuperAdmin && <LuShieldCheck size={11} />}
+                          {staff.role}
+                        </span>
+                        {/* Edit role toggle */}
+                        <button
+                          onClick={() => { setEditingStaffId(isEditing ? null : staff.id); setEditingRole(staff.role || "waiter"); }}
+                          style={{ background: "none", border: "1px solid var(--border)", borderRadius: "var(--r-sm)", cursor: "pointer", color: "var(--text-muted)", display: "flex", alignItems: "center", padding: "0.3rem 0.5rem", gap: "0.25rem", fontSize: "0.75rem", fontWeight: 600 }}
+                          title="Change role">
+                          <LuPencil size={13} /> Role
+                        </button>
+                        {/* Password reset */}
+                        <button
+                          onClick={() => handlePasswordReset(staff.email, staff.id)}
+                          disabled={resetLoadingId === staff.id}
+                          style={{ background: "none", border: "1px solid var(--border)", borderRadius: "var(--r-sm)", cursor: "pointer", color: "var(--text-muted)", display: "flex", alignItems: "center", padding: "0.3rem 0.5rem", gap: "0.25rem", fontSize: "0.75rem", fontWeight: 600 }}
+                          title="Send password reset email">
+                          {resetLoadingId === staff.id ? <LuRefreshCw size={13} /> : <LuKeyRound size={13} />}
+                          Reset
+                        </button>
+                        {/* Delete */}
+                        <button
+                          onClick={() => handleDeleteStaff(staff.id, staff.email)}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", display: "flex", alignItems: "center", padding: "0.3rem" }}
+                          title="Revoke access">
+                          <LuTrash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Inline role editor */}
+                    {isEditing && (
+                      <div style={{ borderTop: "1px solid var(--border)", padding: "0.875rem 1.25rem", background: "var(--ash-pale)", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--text-muted)", whiteSpace: "nowrap" }}>Change role to:</span>
+                        <select value={editingRole} onChange={e => setEditingRole(e.target.value)}
+                          style={{ flex: 1, padding: "0.5rem 0.75rem", border: "1.5px solid var(--border)", borderRadius: "var(--r-md)", fontSize: "0.875rem", fontWeight: 600, background: "var(--white)" }}>
+                          <option value="waiter">Waiter</option>
+                          <option value="kitchen">Kitchen</option>
+                          <option value="supervisor">Supervisor</option>
+                        </select>
+                        <button onClick={() => handleUpdateRole(staff.id)} className={styles.btn} style={{ padding: "0.5rem 1rem", fontSize: "0.875rem" }}>
+                          <LuCheck size={14} /> Save
+                        </button>
+                        <button onClick={() => setEditingStaffId(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
+                          <LuX size={16} />
+                        </button>
+                      </div>
                     )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
