@@ -6,9 +6,12 @@ import styles from "./page.module.css";
 import m from "./menu.module.css";
 import { useAuth } from "../../lib/authContext";
 import { auth, db, storage } from "../../lib/firebase";
+import { firebaseConfig } from "../../lib/firebase";
 import { collection, onSnapshot, updateDoc, doc, query, orderBy, addDoc, deleteDoc, setDoc, getDoc } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
-import { LuX, LuFlame, LuStar, LuCheck, LuPencil } from "react-icons/lu";
+import { initializeApp } from "firebase/app";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { LuX, LuFlame, LuStar, LuCheck, LuPencil, LuUserPlus, LuTrash2, LuShieldCheck } from "react-icons/lu";
 import { useToast } from "../../components/Toast";
 import DashboardNav from "../../components/DashboardNav";
 
@@ -56,6 +59,14 @@ export default function SupervisorDashboard() {
   const [savingBranding, setSavingBranding] = useState(false);
   const heroFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Staff accounts
+  const [staffList, setStaffList] = useState<any[]>([]);
+  const [staffEmail, setStaffEmail] = useState("");
+  const [staffPassword, setStaffPassword] = useState("");
+  const [staffRole, setStaffRole] = useState("waiter");
+  const [staffName, setStaffName] = useState("");
+  const [loadingStaff, setLoadingStaff] = useState(false);
+
   const { toast } = useToast();
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -63,6 +74,13 @@ export default function SupervisorDashboard() {
     getDoc(doc(db, "settings", "branding")).then(snap => {
       if (snap.exists()) setCurrentHeroUrl(snap.data().heroImage || "");
     });
+  }, []);
+
+  useEffect(() => {
+    const unsubStaff = onSnapshot(collection(db, "users"), snap => {
+      setStaffList(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+    return () => unsubStaff();
   }, []);
 
   useEffect(() => {
@@ -204,6 +222,33 @@ export default function SupervisorDashboard() {
     setSelectedFloorTable(null);
   };
 
+  const handleCreateStaff = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoadingStaff(true);
+    try {
+      const secondaryApp = initializeApp(firebaseConfig, `staff-create-${Date.now()}`);
+      const secondaryAuth = getAuth(secondaryApp);
+      const cred = await createUserWithEmailAndPassword(secondaryAuth, staffEmail, staffPassword);
+      await setDoc(doc(db, "users", cred.user.uid), {
+        email: staffEmail,
+        name: staffName.trim() || staffEmail.split("@")[0],
+        role: staffRole,
+      });
+      toast(`Account created for ${staffEmail}!`, "success");
+      setStaffEmail(""); setStaffPassword(""); setStaffName(""); setStaffRole("waiter");
+    } catch (err: any) {
+      toast("Error creating account: " + err.message, "error");
+    } finally {
+      setLoadingStaff(false);
+    }
+  };
+
+  const handleDeleteStaff = async (id: string, email: string) => {
+    if (!confirm(`Revoke access for ${email}? They will no longer be able to log in.`)) return;
+    await deleteDoc(doc(db, "users", id));
+    toast("Staff access revoked.", "info");
+  };
+
   return (
     <ProtectedRoute allowedRoles={["admin", "supervisor"]}>
       <div className={styles.container}>
@@ -226,6 +271,7 @@ export default function SupervisorDashboard() {
             { key: "reviews", label: "Reviews" },
             { key: "floorplan", label: "Floor Plan" },
             { key: "branding", label: "Branding" },
+            { key: "staff", label: "Staff Accounts" },
           ].map(t => (
             <button key={t.key} className={`${styles.tab} ${activeTab === t.key ? styles.active : ""}`} onClick={() => setActiveTab(t.key)}>{t.label}</button>
           ))}
@@ -621,6 +667,80 @@ export default function SupervisorDashboard() {
                   {savingBranding ? `Uploading ${heroImageProgress ?? 0}%…` : "Save Hero Image"}
                 </button>
               )}
+            </div>
+          </section>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════
+            STAFF ACCOUNTS
+        ══════════════════════════════════════════════════════════════ */}
+        {activeTab === "staff" && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Staff Accounts</h2>
+
+            {/* Create form */}
+            <div style={{ background: "var(--white)", border: "1px solid var(--border)", borderRadius: "var(--r-xl)", padding: "1.75rem", marginBottom: "2rem", maxWidth: 560 }}>
+              <p style={{ fontWeight: 800, fontSize: "1rem", marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <LuUserPlus size={18} /> Create New Staff Account
+              </p>
+              <form onSubmit={handleCreateStaff} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <div className={styles.formGroup}>
+                  <label>Full Name</label>
+                  <input type="text" value={staffName} onChange={e => setStaffName(e.target.value)} placeholder="e.g. Ama Mensah" />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Email Address *</label>
+                  <input type="email" value={staffEmail} onChange={e => setStaffEmail(e.target.value)} placeholder="staff@kyekyecuisine.com" required />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Password *</label>
+                  <input type="password" value={staffPassword} onChange={e => setStaffPassword(e.target.value)} placeholder="Min 6 characters" minLength={6} required />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Role *</label>
+                  <select value={staffRole} onChange={e => setStaffRole(e.target.value)}>
+                    <option value="waiter">Waiter</option>
+                    <option value="kitchen">Kitchen</option>
+                    <option value="supervisor">Supervisor</option>
+                  </select>
+                </div>
+                <button type="submit" className={styles.btn} disabled={loadingStaff} style={{ marginTop: "0.25rem" }}>
+                  {loadingStaff ? "Creating account…" : "Create Account"}
+                </button>
+              </form>
+            </div>
+
+            {/* Staff directory */}
+            <h3 style={{ fontWeight: 800, fontSize: "1rem", marginBottom: "1rem" }}>
+              Staff Directory <span style={{ fontWeight: 400, color: "var(--text-muted)", fontSize: "0.875rem" }}>({staffList.length})</span>
+            </h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem", maxWidth: 560 }}>
+              {staffList.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>No staff accounts yet.</p>}
+              {staffList.map(staff => (
+                <div key={staff.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem 1.25rem", background: "var(--white)", borderRadius: "var(--r-lg)", border: "1px solid var(--border)", gap: "0.75rem" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontWeight: 700, fontSize: "0.9375rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {staff.name || staff.email}
+                    </p>
+                    <p style={{ color: "var(--text-muted)", fontSize: "0.8125rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {staff.name ? staff.email : ""}
+                    </p>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
+                    <span style={{ fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" as const, padding: "0.25rem 0.625rem", borderRadius: "var(--r-full)", background: staff.role === "admin" || staff.role === "supervisor" ? "var(--red-tint)" : "var(--ash-pale)", color: staff.role === "admin" || staff.role === "supervisor" ? "var(--red)" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                      {(staff.role === "admin" || staff.role === "supervisor") && <LuShieldCheck size={11} />}
+                      {staff.role}
+                    </span>
+                    {staff.role !== "admin" && (
+                      <button onClick={() => handleDeleteStaff(staff.id, staff.email)}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", display: "flex", alignItems: "center", padding: "0.25rem" }}
+                        title="Revoke access">
+                        <LuTrash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         )}
