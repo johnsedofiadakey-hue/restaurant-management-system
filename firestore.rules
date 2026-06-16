@@ -61,11 +61,11 @@ service cloud.firestore {
     }
 
     // USERS (staff directory)
-    // Staff can read their own doc (for role lookup).
-    // Only admins can write (create/delete staff accounts).
+    // Any signed-in staff can read user docs (needed for role lookups + staff directory).
+    // Supervisors and admins can create/delete staff accounts.
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow write: if isAdmin();
+      allow read: if isSignedIn();
+      allow write: if isSupervisorOrAbove();
     }
   }
 }
